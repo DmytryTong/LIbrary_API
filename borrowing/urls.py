@@ -4,11 +4,7 @@ from borrowing.views import BorrowingListView, BorrowingDetailView, BorrowingCre
 
 urlpatterns = [
     path("", BorrowingListView.as_view(), name="borrowing-list"),
-    path(
-        "<int:id>/",
-        BorrowingDetailView.as_view(),
-        name="borrowing-detail"
-    ),
+    path("<int:pk>/", BorrowingDetailView.as_view(), name="borrowing-detail"),
     path("create/", BorrowingCreateView.as_view(), name="borrowing-create"),
 ]
 

@@ -9,7 +9,6 @@ from allauth.account.views import LogoutView
 
 
 class CustomLogoutView(LogoutView):
-
     def get_next_url(self):
         return "/my-redirect-url/"
 
