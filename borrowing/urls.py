@@ -4,7 +4,6 @@ from borrowing.views import (
     BorrowingListView,
     BorrowingDetailView,
     BorrowingCreateView,
-    BorrowingReturnView,
 )
 
 urlpatterns = [
@@ -15,7 +14,6 @@ urlpatterns = [
         name="borrowing-detail"
     ),
     path("create/", BorrowingCreateView.as_view(), name="borrowing-create"),
-    path("<int:pk>/return/", BorrowingReturnView.as_view(), name="borrowing-return"),
 ]
 
 app_name = "borrowing"
