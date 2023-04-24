@@ -16,3 +16,14 @@ class BorrowingSerializer(serializers.ModelSerializer):
             "expected_return_date",
             "actual_return_date",
         )
+
+
+class BorrowingCreateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Borrowing
+        fields = (
+            "book",
+            "borrow_date",
+            "expected_return_date",
+            "actual_return_date",
+        )

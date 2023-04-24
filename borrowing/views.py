@@ -1,7 +1,9 @@
-from rest_framework import generics, permissions
+from django.db import transaction
+from rest_framework import generics, permissions, status
+from rest_framework.response import Response
 
 from .models import Borrowing
-from .serializers import BorrowingSerializer
+from .serializers import BorrowingSerializer, BorrowingCreateSerializer
 
 
 class BorrowingListView(generics.ListCreateAPIView):
@@ -27,3 +29,30 @@ class BorrowingDetailView(generics.RetrieveAPIView):
     serializer_class = BorrowingSerializer
     queryset = Borrowing.objects.all()
     permission_classes = [permissions.IsAuthenticated]
+
+
+class BorrowingCreateView(generics.CreateAPIView):
+    serializer_class = BorrowingCreateSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def create(self, request, *args, **kwargs):
+        book = request.data.get("book")
+
+        if book.inventory <= 0:
+            return Response({"error": "Book is not available"}, status=status.HTTP_400_BAD_REQUEST)
+
+        with transaction.atomic():
+            book.inventory -= 1
+            book.save()
+
+            user = request.user
+
+            borrowing = Borrowing.objects.create(
+                book=book,
+                user=user,
+                borrow_date=request.data.get("borrow_date"),
+                expected_return_date=request.data.get("expected_return_date"),
+            )
+
+            serializer = BorrowingSerializer(borrowing)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
