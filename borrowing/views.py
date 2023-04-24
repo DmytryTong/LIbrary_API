@@ -12,12 +12,12 @@ class BorrowingListView(generics.ListCreateAPIView):
         user = self.request.user
         if user.is_superuser:
             queryset = Borrowing.objects.all()
-            user_id = self.request.query_params.get('user_id', None)
+            user_id = self.request.query_params.get("user_id", None)
             if user_id is not None:
                 queryset = queryset.filter(user__id=user_id)
         else:
             queryset = Borrowing.objects.filter(user=user)
-        is_active = self.request.query_params.get('is_active', None)
+        is_active = self.request.query_params.get("is_active", None)
         if is_active is not None:
             queryset = queryset.filter(actual_return_date__isnull=True)
         return queryset
