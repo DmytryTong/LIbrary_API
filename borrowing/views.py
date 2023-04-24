@@ -40,7 +40,9 @@ class BorrowingCreateView(generics.CreateAPIView):
         book = get_object_or_404(Book, id=book_id)
 
         if book.inventory <= 0:
-            return Response({"error": "Book is not available"}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {"error": "Book is not available"}, status=status.HTTP_400_BAD_REQUEST
+            )
 
         with transaction.atomic():
             book.inventory -= 1

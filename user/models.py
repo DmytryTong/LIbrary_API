@@ -42,9 +42,7 @@ class User(AbstractUser):
     username = None
     email = models.EmailField(_("email address"), unique=True)
     profile_picture = models.ImageField(
-        upload_to="profile_pictures/",
-        null=True,
-        blank=True
+        upload_to="profile_pictures/", null=True, blank=True
     )
     bio = models.TextField(blank=True)
     USERNAME_FIELD = "email"
