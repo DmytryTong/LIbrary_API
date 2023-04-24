@@ -1,5 +1,4 @@
 from django.db import models
-from django.contrib.auth.models import User
 
 from book.models import Book
 from config import settings
@@ -11,3 +10,4 @@ class Borrowing(models.Model):
     borrow_date = models.DateTimeField(auto_now_add=True)
     expected_return_date = models.DateTimeField()
     actual_return_date = models.DateTimeField(null=True, blank=True)
+    is_active = models.BooleanField(default=True)

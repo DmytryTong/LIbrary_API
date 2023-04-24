@@ -1,27 +1,35 @@
+import django_filters
 from django.db import transaction
+from django.shortcuts import get_object_or_404
 from rest_framework import generics, permissions, status
 from rest_framework.response import Response
 
+from book.models import Book
+from .filters import BorrowingFilter
 from .models import Borrowing
+from .permissions import IsOwnerOrAdmin
 from .serializers import BorrowingSerializer, BorrowingCreateSerializer
 
 
-class BorrowingListView(generics.ListCreateAPIView):
+class BorrowingListView(generics.ListAPIView):
     serializer_class = BorrowingSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    filter_backends = [django_filters.rest_framework.DjangoFilterBackend]
+    filterset_class = BorrowingFilter
+    permission_classes = [permissions.IsAuthenticated, IsOwnerOrAdmin]
 
     def get_queryset(self):
         user = self.request.user
-        if user.is_superuser:
-            queryset = Borrowing.objects.all()
-            user_id = self.request.query_params.get("user_id", None)
-            if user_id is not None:
-                queryset = queryset.filter(user__id=user_id)
-        else:
-            queryset = Borrowing.objects.filter(user=user)
-        is_active = self.request.query_params.get("is_active", None)
+        queryset = Borrowing.objects.filter(user=user)
+        is_active = self.request.query_params.get('is_active', None)
+        user_id = self.request.query_params.get('user_id', None)
         if is_active is not None:
-            queryset = queryset.filter(actual_return_date__isnull=True)
+            is_active = True if is_active.lower() == 'true' else False
+            queryset = (
+                queryset.filter(actual_return_date=None)
+                if is_active else queryset.exclude(actual_return_date=None)
+            )
+        if user.is_superuser and user_id is not None:
+            queryset = Borrowing.objects.filter(user_id=user_id)
         return queryset
 
 
@@ -36,7 +44,8 @@ class BorrowingCreateView(generics.CreateAPIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def create(self, request, *args, **kwargs):
-        book = request.data.get("book")
+        book_id = request.data.get("book")
+        book = get_object_or_404(Book, id=book_id)
 
         if book.inventory <= 0:
             return Response({"error": "Book is not available"}, status=status.HTTP_400_BAD_REQUEST)
@@ -56,3 +65,6 @@ class BorrowingCreateView(generics.CreateAPIView):
 
             serializer = BorrowingSerializer(borrowing)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
