@@ -23,5 +23,5 @@ urlpatterns = [
     path("admin/", admin.site.urls),
     path("users/", include("user.urls", namespace="user")),
     path("api/book/", include("book.urls", namespace="book")),
-    path("api/borrowing/", include("borrowing.urls", namespace="borrowing")),
+    path("api/borrowings/", include("borrowing.urls", namespace="borrowing")),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
