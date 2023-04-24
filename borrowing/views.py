@@ -20,13 +20,14 @@ class BorrowingListView(generics.ListAPIView):
     def get_queryset(self):
         user = self.request.user
         queryset = Borrowing.objects.filter(user=user)
-        is_active = self.request.query_params.get('is_active', None)
-        user_id = self.request.query_params.get('user_id', None)
+        is_active = self.request.query_params.get("is_active", None)
+        user_id = self.request.query_params.get("user_id", None)
         if is_active is not None:
-            is_active = True if is_active.lower() == 'true' else False
+            is_active = True if is_active.lower() == "true" else False
             queryset = (
                 queryset.filter(actual_return_date=None)
-                if is_active else queryset.exclude(actual_return_date=None)
+                if is_active
+                else queryset.exclude(actual_return_date=None)
             )
         if user.is_superuser and user_id is not None:
             queryset = Borrowing.objects.filter(user_id=user_id)
@@ -48,7 +49,9 @@ class BorrowingCreateView(generics.CreateAPIView):
         book = get_object_or_404(Book, id=book_id)
 
         if book.inventory <= 0:
-            return Response({"error": "Book is not available"}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {"error": "Book is not available"}, status=status.HTTP_400_BAD_REQUEST
+            )
 
         with transaction.atomic():
             book.inventory -= 1
