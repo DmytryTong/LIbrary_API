@@ -4,7 +4,7 @@ from book.serializers import BookSerializer
 
 
 class BorrowingSerializer(serializers.ModelSerializer):
-    book = BookSerializer()
+    book = BookSerializer
 
     class Meta:
         model = Borrowing
@@ -15,6 +15,16 @@ class BorrowingSerializer(serializers.ModelSerializer):
             "borrow_date",
             "expected_return_date",
             "actual_return_date",
+            "is_active",
+        )
+        read_only_fields = (
+            "id",
+            "book",
+            "user",
+            "borrow_date",
+            "expected_return_date",
+            "actual_return_date",
+            "is_active",
         )
 
 
