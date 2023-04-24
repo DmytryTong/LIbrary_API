@@ -36,7 +36,8 @@ class BorrowingCreateView(generics.CreateAPIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def create(self, request, *args, **kwargs):
-        book = request.data.get("book")
+        book_id = request.data.get("book")
+        book = get_object_or_404(Book, id=book_id)
 
         if book.inventory <= 0:
             return Response({"error": "Book is not available"}, status=status.HTTP_400_BAD_REQUEST)

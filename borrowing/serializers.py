@@ -4,7 +4,7 @@ from book.serializers import BookSerializer
 
 
 class BorrowingSerializer(serializers.ModelSerializer):
-    book = BookSerializer()
+    book = BookSerializer
 
     class Meta:
         model = Borrowing
