@@ -1,10 +1,12 @@
 import stripe
-from django.shortcuts import get_object_or_404
+from django.shortcuts import get_object_or_404, redirect
+from django.urls import reverse
 from rest_framework import generics, status
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from decimal import Decimal
 
 import borrowing
 from borrowing.models import Borrowing
@@ -28,7 +30,7 @@ class PaymentListView(generics.ListAPIView):
         return queryset.all()
 
 
-class PaymentDetailView(generics.RetrieveAPIView):
+class PaymentDetailView(generics.RetrieveDestroyAPIView):
     queryset = Payment.objects.select_related("borrowing__user")
     serializer_class = PaymentSerializer
     permission_classes = [
@@ -65,7 +67,22 @@ def create_payment_session(request, pk):
         ],
         mode="payment",
         success_url="http://localhost:4242/success",
-        cancel_url="http://localhost:4242/cancel",
+        cancel_url="http://127.0.0.1:8000/api/payments/cancel/",
+    #    cancel_url=reverse("payments:cancel_payment"),
     )
 
+    payment = Payment.objects.create(
+        status=Payment.PaymentStatusEnum.PENDING,
+        type=Payment.PaymentTypeEnum.PAYMENT,
+        borrowing=borrowing,
+        session_id=session.id,
+        session_url=session.url,
+        money_to_pay=borrowing.book.daily_fee * 100
+    )
+    payment.save()
     return Response({"message": session.url}, status=200)
+
+
+@api_view(["GET"])
+def cancel_payment(request):
+    return Response({"message": "Payment was paused"}, status=200)
