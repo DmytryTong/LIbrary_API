@@ -49,6 +49,7 @@ INSTALLED_APPS = [
     "allauth.socialaccount",
     "drf_spectacular",
     "django_filters",
+    "payment",
     "django_q",
 ]
 
