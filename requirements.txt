@@ -49,5 +49,5 @@ uritemplate==4.1.1
 urllib3==1.26.15
 django-filter~=23.1
 wcwidth==0.2.6
-
 stripe~=5.4.0
+telebot~=0.0.5
