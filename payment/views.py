@@ -1,16 +1,9 @@
-import os
-
 import stripe
-from django.shortcuts import get_object_or_404, redirect
-from django.urls import reverse
-from rest_framework import generics, status
-from rest_framework.decorators import api_view, permission_classes
+from django.shortcuts import get_object_or_404
+from rest_framework import generics
+from rest_framework.decorators import api_view
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-from rest_framework.views import APIView
-from decimal import Decimal
-
-import borrowing
 from borrowing.models import Borrowing
 from config import settings
 from payment.models import Payment
