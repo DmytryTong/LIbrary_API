@@ -1,7 +1,11 @@
 import django_filters
 from django.db import transaction
 from django.shortcuts import get_object_or_404
+
+from django.utils import timezone
+
 from rest_framework import generics, permissions, status
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from book.models import Book
@@ -9,6 +13,23 @@ from .filters import BorrowingFilter
 from .models import Borrowing
 from .permissions import IsOwnerOrAdmin
 from .serializers import BorrowingSerializer, BorrowingCreateSerializer
+
+class BorrowingReturnView(generics.UpdateAPIView):
+    queryset = Borrowing.objects.all()
+    serializer_class = BorrowingSerializer
+    permission_classes = [IsAuthenticated]
+
+    def update(self, request, *args, **kwargs):
+        borrowing = self.get_object()
+        if borrowing.actual_return_date:
+            return Response({"error": "This borrowing has already been returned."}, status=status.HTTP_400_BAD_REQUEST)
+        borrowing.actual_return_date = timezone.now()
+        borrowing.is_active = False # set is_active to False
+        borrowing.save()
+        borrowing.book.inventory += 1
+        borrowing.book.save()
+        serializer = self.get_serializer(borrowing)
+        return Response(serializer.data)
 
 
 class BorrowingListView(generics.ListAPIView):
