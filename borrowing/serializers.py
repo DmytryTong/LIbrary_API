@@ -7,7 +7,7 @@ from book.serializers import BookSerializer
 
 class BorrowingSerializer(serializers.ModelSerializer):
     book = BookSerializer
-    payments = PaymentSerializer()
+    payments = PaymentSerializer(many=True)
 
     class Meta:
         model = Borrowing
