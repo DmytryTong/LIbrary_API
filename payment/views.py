@@ -4,12 +4,11 @@ from rest_framework import generics
 from rest_framework.decorators import api_view
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-from rest_framework.views import APIView
-from decimal import Decimal
-import borrowing
+
 from borrowing import helpers
 from borrowing.models import Borrowing
 from config import settings
+from payment.helpers import calculate_fee_payment, calculate_fine_payment
 from payment.models import Payment
 from payment.permissions import IsOwnerOrAdmin
 from payment.serializers import PaymentSerializer
@@ -49,6 +48,19 @@ class PaymentCreateView(generics.CreateAPIView):
 def create_payment_session(request, pk):
     stripe.api_key = settings.STRIPE_API_KEY
     borrowing = get_object_or_404(Borrowing, id=pk)
+
+    fee = calculate_fee_payment(
+        borrowing.expected_return_date,
+        borrowing.borrow_date,
+        borrowing.book.daily_fee
+    )
+    if borrowing.actual_return_date:
+        fee = calculate_fine_payment(
+            borrowing.expected_return_date,
+            borrowing.actual_return_date,
+            borrowing.book.daily_fee
+        )
+
     session = stripe.checkout.Session.create(
         line_items=[
             {
@@ -57,7 +69,7 @@ def create_payment_session(request, pk):
                     "product_data": {
                         "name": borrowing.book.title,
                     },
-                    "unit_amount": borrowing.book.daily_fee * 100,
+                    "unit_amount": fee,
                 },
                 "quantity": 1,
             }
@@ -73,7 +85,7 @@ def create_payment_session(request, pk):
         borrowing=borrowing,
         session_id=session.id,
         session_url=session.url,
-        money_to_pay=borrowing.book.daily_fee * 100,
+        money_to_pay=fee,
     )
     payment.save()
 

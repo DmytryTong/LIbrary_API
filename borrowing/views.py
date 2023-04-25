@@ -5,12 +5,14 @@ from django.shortcuts import get_object_or_404
 from django.urls import reverse
 
 from django.utils import timezone
+from django.utils.datetime_safe import datetime
 
 from rest_framework import generics, permissions, status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from book.models import Book
+from payment.helpers import calculate_fine_payment
 from .filters import BorrowingFilter
 from .models import Borrowing
 from .permissions import IsOwnerOrAdmin
@@ -33,9 +35,23 @@ class BorrowingReturnView(generics.UpdateAPIView):
         borrowing.actual_return_date = timezone.now()
         borrowing.is_active = False  # set is_active to False
         borrowing.save()
+        fine = None
+        if borrowing.actual_return_date > borrowing.expected_return_date:
+            fine = calculate_fine_payment(
+                borrowing.expected_return_date,
+                borrowing.actual_return_date,
+                borrowing.book.daily_fee
+            )
         borrowing.book.inventory += 1
         borrowing.book.save()
         serializer = self.get_serializer(borrowing)
+
+        serializer = BorrowingSerializer(borrowing)
+
+        if fine:
+            payment_url = reverse("payments:success", args=[borrowing.id])
+            return HttpResponseRedirect(payment_url)
+
         return Response(serializer.data)
 
 
