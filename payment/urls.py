@@ -4,7 +4,8 @@ from payment.views import (
     PaymentDetailView,
     PaymentListView,
     PaymentCreateView,
-    create_payment_session, cancel_payment,
+    create_payment_session,
+    cancel_payment,
 )
 
 urlpatterns = [

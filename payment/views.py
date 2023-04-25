@@ -68,7 +68,6 @@ def create_payment_session(request, pk):
         mode="payment",
         success_url="http://localhost:4242/success",
         cancel_url="http://127.0.0.1:8000/api/payments/cancel/",
-    #    cancel_url=reverse("payments:cancel_payment"),
     )
 
     payment = Payment.objects.create(
@@ -77,7 +76,7 @@ def create_payment_session(request, pk):
         borrowing=borrowing,
         session_id=session.id,
         session_url=session.url,
-        money_to_pay=borrowing.book.daily_fee * 100
+        money_to_pay=borrowing.book.daily_fee * 100,
     )
     payment.save()
     return Response({"message": session.url}, status=200)
