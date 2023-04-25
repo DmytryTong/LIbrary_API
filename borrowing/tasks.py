@@ -26,4 +26,7 @@ def notify_overdue_borrowers():
 
 
 # Schedule the task to run every day at a specific time (e.g., 9:00 AM)
-async_task("borrowing.tasks.notify_overdue_borrowers", schedule=timezone.now().replace(hour=9, minute=0, second=0))
+async_task(
+    "borrowing.tasks.notify_overdue_borrowers",
+    schedule=timezone.now().replace(hour=9, minute=0, second=0),
+)

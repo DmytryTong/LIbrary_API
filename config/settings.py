@@ -11,10 +11,13 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 """
 from datetime import timedelta
 from pathlib import Path
+import stripe
 
 # Build paths inside the project like this: BASE_DIR / "subdir".
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+STRIPE_PUBLIC_KEY = "pk_test_51N0hh7FUucPJJ3RwSmtqUAPzLaucb1zYBSzzqToKP730ChWWDdEdjniUmdjUCidfzvDxAGROoLsPnnBHGnlTfueV00Bb4HmVOr"
+STRIPE_API_KEY = "sk_test_51N0hh7FUucPJJ3RwDPwe9jSqRZNl5gGcY5sAUSQkUUREt0uvmdRCFRJ9EzZxOnrdVm9YQr5m0YeQpYSE1uukorr50063aNpZ0d"
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
@@ -50,6 +53,7 @@ INSTALLED_APPS = [
     "drf_spectacular",
     "django_filters",
     "payment",
+    "stripe",
     "django_q",
 ]
 

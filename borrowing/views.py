@@ -15,6 +15,7 @@ from .permissions import IsOwnerOrAdmin
 from .serializers import BorrowingSerializer, BorrowingCreateSerializer
 from .helpers import send_telegram_notification
 
+
 class BorrowingReturnView(generics.UpdateAPIView):
     queryset = Borrowing.objects.all()
     serializer_class = BorrowingSerializer
@@ -23,9 +24,12 @@ class BorrowingReturnView(generics.UpdateAPIView):
     def update(self, request, *args, **kwargs):
         borrowing = self.get_object()
         if borrowing.actual_return_date:
-            return Response({"error": "This borrowing has already been returned."}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {"error": "This borrowing has already been returned."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
         borrowing.actual_return_date = timezone.now()
-        borrowing.is_active = False # set is_active to False
+        borrowing.is_active = False  # set is_active to False
         borrowing.save()
         borrowing.book.inventory += 1
         borrowing.book.save()

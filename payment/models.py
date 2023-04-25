@@ -4,26 +4,16 @@ from borrowing.models import Borrowing
 
 
 class Payment(models.Model):
-
-
     class PaymentStatusEnum(models.TextChoices):
         PENDING = "pending"
         PAID = "paid"
-
 
     class PaymentTypeEnum(models.TextChoices):
         PAYMENT = "payment"
         FINE = "fine"
 
-
-    status = models.CharField(
-        max_length=50,
-        choices=PaymentStatusEnum.choices
-    )
-    type = models.CharField(
-        max_length=50,
-        choices=PaymentTypeEnum.choices
-    )
+    status = models.CharField(max_length=50, choices=PaymentStatusEnum.choices)
+    type = models.CharField(max_length=50, choices=PaymentTypeEnum.choices)
     borrowing = models.ForeignKey(
         to=Borrowing, on_delete=models.CASCADE, related_name="payments"
     )
