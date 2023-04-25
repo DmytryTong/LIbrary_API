@@ -11,6 +11,7 @@ from rest_framework.views import APIView
 from decimal import Decimal
 
 import borrowing
+from borrowing import helpers
 from borrowing.models import Borrowing
 from config import settings
 from payment.models import Payment
@@ -79,6 +80,15 @@ def create_payment_session(request, pk):
         money_to_pay=borrowing.book.daily_fee * 100,
     )
     payment.save()
+
+    payment_info = (
+        f"Payment for book {borrowing.book.title}\n"
+        f"User: {borrowing.user}\n"
+        f"Status: {payment.status}\n"
+        f"Amount: ${payment.money_to_pay / 100}"
+    )
+    helpers.send_telegram_notification(payment_info)
+
     return Response({"message": session.url}, status=200)
 
 
