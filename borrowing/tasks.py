@@ -21,4 +21,4 @@ def notify_overdue_borrowers():
             )
             helpers.send_telegram_notification(message=notification_message)
     else:
-        helpers.send_telegram_notification(message="No overdue books")
+        helpers.send_telegram_notification(message="No overdue books today!")
