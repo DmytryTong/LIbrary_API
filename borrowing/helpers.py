@@ -1,9 +1,10 @@
 import os
-from telegram import Bot
+import telebot
 
 
 def send_telegram_notification(message):
-    chat_id = os.getenv("TELEGRAM_CHAT_ID")
-    bot_token = os.getenv("TELEGRAM_BOT_TOKEN")
-    bot = Bot(token=bot_token)
-    bot.sendMessage(chat_id=chat_id, text=message)
+    CHAT_ID = os.getenv("TELEGRAM_CHAT_ID")
+    BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
+
+    bot = telebot.TeleBot(token=BOT_TOKEN)
+    bot.send_message(chat_id=CHAT_ID, text=message)

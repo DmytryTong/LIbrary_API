@@ -1,6 +1,6 @@
 from django.utils import timezone
-from django_q.tasks import async_task
 
+from borrowing import helpers
 from borrowing.models import Borrowing
 
 
@@ -19,11 +19,6 @@ def notify_overdue_borrowers():
                 f"Dear {user_name}, you have overdue book {title} that"
                 f" should be returned by {expected_return_date}"
             )
-            # TODO: send notification to user telegram bot
+            helpers.send_telegram_notification(message=notification_message)
     else:
-        # TODO: send notification telegram bot (No overdue borrowings found)
-        pass
-
-
-# Schedule the task to run every day at a specific time (e.g., 9:00 AM)
-async_task("borrowing.tasks.notify_overdue_borrowers", schedule=timezone.now().replace(hour=9, minute=0, second=0))
+        helpers.send_telegram_notification(message="No overdue books")
