@@ -1,6 +1,8 @@
 import django_filters
 from django.db import transaction
+from django.http import HttpResponseRedirect
 from django.shortcuts import get_object_or_404
+from django.urls import reverse
 
 from django.utils import timezone
 
@@ -93,12 +95,13 @@ class BorrowingCreateView(generics.CreateAPIView):
             )
 
             serializer = BorrowingSerializer(borrowing)
+            payment_url = reverse("payments:success", args=[borrowing.id])
 
             # Send a notification to the Telegram chat
             message = f"A new borrowing has been created:\n\n{serializer.data}"
             send_telegram_notification(message)
 
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
+            return HttpResponseRedirect(payment_url)
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
