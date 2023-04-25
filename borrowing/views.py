@@ -32,18 +32,26 @@ class BorrowingReturnView(generics.UpdateAPIView):
                 {"error": "This borrowing has already been returned."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
-        borrowing.actual_return_date = datetime.strptime("2023-04-29 17:30:51", "%Y-%m-%d %H:%M:%S")
-        fine = calculate_fine_payment(
-            borrowing.expected_return_date,
-            borrowing.actual_return_date,
-            borrowing.book.daily_fee
-        )
-
+        borrowing.actual_return_date = timezone.now()
         borrowing.is_active = False  # set is_active to False
         borrowing.save()
+        fine = None
+        if borrowing.actual_return_date > borrowing.expected_return_date:
+            fine = calculate_fine_payment(
+                borrowing.expected_return_date,
+                borrowing.actual_return_date,
+                borrowing.book.daily_fee
+            )
         borrowing.book.inventory += 1
         borrowing.book.save()
         serializer = self.get_serializer(borrowing)
+
+        serializer = BorrowingSerializer(borrowing)
+
+        if fine:
+            payment_url = reverse("payments:success", args=[borrowing.id])
+            return HttpResponseRedirect(payment_url)
+
         return Response(serializer.data)
 
 
