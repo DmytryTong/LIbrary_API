@@ -19,6 +19,6 @@ class PaymentListView(generics.ListAPIView):
 
 
 class PaymentDetailView(generics.RetrieveAPIView):
-    queryset = Payment.objects.select_related("borrowing__user").all()
+    queryset = Payment.objects.select_related("borrowing__user")
     serializer_class = PaymentSerializer
     permission_classes = [IsOwnerOrAdmin, ]
