@@ -1,3 +1,5 @@
+import os
+
 import stripe
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
@@ -46,11 +48,9 @@ class PaymentCreateView(generics.CreateAPIView):
     ]
 
 
-stripe.api_key = settings.STRIPE_API_KEY
-
-
 @api_view(["POST"])
 def create_payment_session(request, pk):
+    stripe.api_key = settings.STRIPE_API_KEY
     borrowing = get_object_or_404(Borrowing, id=pk)
     session = stripe.checkout.Session.create(
         line_items=[

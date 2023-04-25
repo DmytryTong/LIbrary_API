@@ -9,6 +9,7 @@ https://docs.djangoproject.com/en/4.2/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.2/ref/settings/
 """
+import os
 from datetime import timedelta
 from pathlib import Path
 import stripe
@@ -16,14 +17,12 @@ import stripe
 # Build paths inside the project like this: BASE_DIR / "subdir".
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-STRIPE_PUBLIC_KEY = "pk_test_51N0hh7FUucPJJ3RwSmtqUAPzLaucb1zYBSzzqToKP730ChWWDdEdjniUmdjUCidfzvDxAGROoLsPnnBHGnlTfueV00Bb4HmVOr"
-STRIPE_API_KEY = "sk_test_51N0hh7FUucPJJ3RwDPwe9jSqRZNl5gGcY5sAUSQkUUREt0uvmdRCFRJ9EzZxOnrdVm9YQr5m0YeQpYSE1uukorr50063aNpZ0d"
-
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = "django-insecure-jke6-b%s4kx+)+xx-" "h*4n8vorkzlp3m&%k3hgo2l7+0+68#=jk"
+STRIPE_API_KEY = os.environ.get("STRIPE_API_KEY")
 
 # SECURITY WARNING: don"t run with debug turned on in production!
 DEBUG = True
