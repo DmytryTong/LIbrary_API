@@ -3,16 +3,13 @@ from django.db import transaction
 from django.http import HttpResponseRedirect
 from django.shortcuts import get_object_or_404
 from django.urls import reverse
-
 from django.utils import timezone
-from django.utils.datetime_safe import datetime
 
 from rest_framework import generics, permissions, status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from book.models import Book
-from payment.helpers import calculate_fine_payment
 from .filters import BorrowingFilter
 from .models import Borrowing
 from .permissions import IsOwnerOrAdmin
@@ -33,13 +30,13 @@ class BorrowingReturnView(generics.UpdateAPIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
         borrowing.actual_return_date = timezone.now()
-        borrowing.is_active = False  # set is_active to False
+        borrowing.is_active = False
         borrowing.save()
         borrowing.book.inventory += 1
         borrowing.book.save()
 
         if borrowing.actual_return_date > borrowing.expected_return_date:
-            payment_url = reverse("payments:success", args=[borrowing.id])
+            payment_url = reverse("payments:session-payment", args=[borrowing.id])
 
             return HttpResponseRedirect(payment_url)
 
@@ -103,7 +100,7 @@ class BorrowingCreateView(generics.CreateAPIView):
             )
 
             serializer = BorrowingSerializer(borrowing)
-            payment_url = reverse("payments:success", args=[borrowing.id])
+            payment_url = reverse("payments:session-payment", args=[borrowing.id])
 
             # Send a notification to the Telegram chat
             message = f"A new borrowing has been created:\n\n{serializer.data}"
