@@ -50,16 +50,16 @@ def create_payment_session(request, pk):
     borrowing = get_object_or_404(Borrowing, id=pk)
 
     fee = calculate_fee_payment(
-        borrowing.expected_return_date,
         borrowing.borrow_date,
+        borrowing.expected_return_date,
         borrowing.book.daily_fee
     )
     if borrowing.actual_return_date:
-        fee = calculate_fine_payment(
+        fee = calculate_fee_payment(
             borrowing.expected_return_date,
             borrowing.actual_return_date,
             borrowing.book.daily_fee
-        )
+        ) * settings.FINE_MULTIPLIER
 
     session = stripe.checkout.Session.create(
         line_items=[
@@ -87,10 +87,13 @@ def create_payment_session(request, pk):
         session_url=session.url,
         money_to_pay=fee,
     )
+
+    if borrowing.actual_return_date:
+        payment.type = Payment.PaymentTypeEnum.FINE
     payment.save()
 
     payment_info = (
-        f"Payment for book {borrowing.book.title}\n"
+        f"{payment.type} for book {borrowing.book.title}\n"
         f"User: {borrowing.user}\n"
         f"Status: {payment.status}\n"
         f"Amount: ${payment.money_to_pay / 100}"
@@ -101,5 +104,5 @@ def create_payment_session(request, pk):
 
 
 @api_view(["GET"])
-def cancel_payment(request):
+def cancel_payment(request) -> Response:
     return Response({"message": "Payment was paused"}, status=200)

@@ -1,11 +1,6 @@
-def calculate_fine_payment(expected_return_date, actual_return_date, daily_fee):
-    if actual_return_date > expected_return_date:
-        return (actual_return_date.day - expected_return_date.day) * daily_fee * 200
-    return False
+from datetime import datetime, timedelta
 
-
-def calculate_fee_payment(expected_return_date, borrow_date, daily_fee):
-    calculation = ((expected_return_date.day - borrow_date.day) * daily_fee) * 100
-    if calculation < daily_fee:
-        return daily_fee * 100
-    return calculation
+def calculate_fee_payment(start_date: datetime, end_date: datetime, daily_fee: int) -> int:
+    end_date += timedelta(hours=1)
+    day_count = (end_date - start_date).days
+    return max(1, day_count) * daily_fee

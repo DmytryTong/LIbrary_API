@@ -35,24 +35,16 @@ class BorrowingReturnView(generics.UpdateAPIView):
         borrowing.actual_return_date = timezone.now()
         borrowing.is_active = False  # set is_active to False
         borrowing.save()
-        fine = None
-        if borrowing.actual_return_date > borrowing.expected_return_date:
-            fine = calculate_fine_payment(
-                borrowing.expected_return_date,
-                borrowing.actual_return_date,
-                borrowing.book.daily_fee
-            )
         borrowing.book.inventory += 1
         borrowing.book.save()
-        serializer = self.get_serializer(borrowing)
 
-        serializer = BorrowingSerializer(borrowing)
-
-        if fine:
+        if borrowing.actual_return_date > borrowing.expected_return_date:
             payment_url = reverse("payments:success", args=[borrowing.id])
+
             return HttpResponseRedirect(payment_url)
 
-        return Response(serializer.data)
+        serializer = self.get_serializer(borrowing)
+        return Response(serializer.data, status=status.HTTP_202_ACCEPTED)
 
 
 class BorrowingListView(generics.ListAPIView):
