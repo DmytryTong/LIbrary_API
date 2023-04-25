@@ -11,4 +11,7 @@ class BookViewSet(viewsets.ModelViewSet):
     queryset = Book.objects.all()
     serializer_class = BookSerializer
     authentication_classes = (JWTAuthentication,)
-    permission_classes = (IsAuthenticated, IsAdminOrIfAuthenticatedReadOnly,)
+    permission_classes = (
+        IsAuthenticated,
+        IsAdminOrIfAuthenticatedReadOnly,
+    )
