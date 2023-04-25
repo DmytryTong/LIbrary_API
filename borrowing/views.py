@@ -13,6 +13,7 @@ from .filters import BorrowingFilter
 from .models import Borrowing
 from .permissions import IsOwnerOrAdmin
 from .serializers import BorrowingSerializer, BorrowingCreateSerializer
+from .helpers import send_telegram_notification
 
 class BorrowingReturnView(generics.UpdateAPIView):
     queryset = Borrowing.objects.all()
@@ -88,6 +89,11 @@ class BorrowingCreateView(generics.CreateAPIView):
             )
 
             serializer = BorrowingSerializer(borrowing)
+
+            # Send a notification to the Telegram chat
+            message = f"A new borrowing has been created:\n\n{serializer.data}"
+            send_telegram_notification(message)
+
             return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     def perform_create(self, serializer):
