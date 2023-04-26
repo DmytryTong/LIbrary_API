@@ -90,23 +90,27 @@ class BorrowingCreateView(generics.CreateAPIView):
         user = request.user
         # Check if user has any pending payments
         if Payment.objects.filter(
-                borrowing__user=user,
-                status=Payment.PaymentStatusEnum.PENDING
+            borrowing__user=user, status=Payment.PaymentStatusEnum.PENDING
         ).exists():
             borrowing_list_url = reverse("borrowing:borrowing-list")
             return Response(
                 {
-                    "ERROR": f"Cannot create a borrowing until all pending payments are cleared. "
-                             f"Please pay all pending payments before creating a new borrowing. "
-                             f"You can view your borrowings at {borrowing_list_url}."},
-                status=status.HTTP_400_BAD_REQUEST
+                    "ERROR": f"Cannot create a borrowing "
+                             f"until all pending payments are cleared. "
+                             f"Please pay all pending payments "
+                             f"before creating a new borrowing. "
+                             f"You can view your "
+                             f"borrowings at {borrowing_list_url}."
+                },
+                status=status.HTTP_400_BAD_REQUEST,
             )
         book_id = request.data.get("book")
         book = get_object_or_404(Book, id=book_id)
 
         if book.inventory <= 0:
             return Response(
-                {"ERROR": "Book is not available"}, status=status.HTTP_400_BAD_REQUEST
+                {"ERROR": "Book is not available"},
+                status=status.HTTP_400_BAD_REQUEST,
             )
 
         borrow_date = str(timezone.now())
@@ -131,7 +135,6 @@ class BorrowingCreateView(generics.CreateAPIView):
                 expected_return_date=request.data.get("expected_return_date"),
             )
 
-            serializer = BorrowingSerializer(borrowing)
             payment_url = create_payment_session(request, borrowing.id)
 
             # Send a notification to the Telegram chat

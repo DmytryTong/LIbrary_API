@@ -25,8 +25,11 @@ class AuthorizeBookViewTest(APITestCase):
         )
         self.client.force_authenticate(self.user)
         self.book = Book.objects.create(
-            title="Test Book", author="Test Author", cover=Book.BookCoverChoices.HARD,
-            inventory=5, daily_fee=Decimal(10)
+            title="Test Book",
+            author="Test Author",
+            cover=Book.BookCoverChoices.HARD,
+            inventory=5,
+            daily_fee=Decimal(10),
         )
         self.detail_url = reverse("book:book-detail", args=[self.book.pk])
 
@@ -41,7 +44,6 @@ class AuthorizeBookViewTest(APITestCase):
 
 
 class AnonBookViewTest(APITestCase):
-
     def test_anon_post_request(self) -> None:
         response = self.client.post(BOOK_URL, data=DATA)
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
@@ -62,7 +64,10 @@ class AdminBookViewTest(APITestCase):
 class BookModelTest(TestCase):
     def test_str_method(self):
         book = Book.objects.create(
-            title="Test Book", author="Test Author", cover=Book.BookCoverChoices.HARD,
-            inventory=5, daily_fee=Decimal(10)
+            title="Test Book",
+            author="Test Author",
+            cover=Book.BookCoverChoices.HARD,
+            inventory=5,
+            daily_fee=Decimal(10),
         )
         self.assertEqual(str(book), "Test Book")

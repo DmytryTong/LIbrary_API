@@ -26,13 +26,13 @@ class UserPaymentsApiTest(TestCase):
             "password1122",
         )
         self.test_book = Book.objects.create(
-                title="Test book",
-                author="Test author",
-                cover="Hard",
-                inventory=10,
-                daily_fee=10,
+            title="Test book",
+            author="Test author",
+            cover="Hard",
+            inventory=10,
+            daily_fee=10,
         )
-    
+
     def test_auth_required(self) -> None:
         response = self.client.get(PAYMENT_LIST_URL)
 
@@ -43,7 +43,7 @@ class UserPaymentsApiTest(TestCase):
         response = self.client.get(PAYMENT_LIST_URL)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-    
+
     def test_owner_gets_payments(self) -> None:
         self.client.force_authenticate(self.user)
         test_payment1 = Payment.objects.create(
@@ -95,7 +95,7 @@ class UserPaymentsApiTest(TestCase):
         self.assertIn(serializer1.data, response.data)
         self.assertIn(serializer2.data, response.data)
         self.assertNotIn(serializer3.data, response.data)
-    
+
     def test_admin_gets_payments(self) -> None:
         self.client.force_authenticate(self.useradmin)
         test_payment1 = Payment.objects.create(

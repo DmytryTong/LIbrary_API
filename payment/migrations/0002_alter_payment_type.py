@@ -14,7 +14,8 @@ class Migration(migrations.Migration):
             model_name="payment",
             name="type",
             field=models.CharField(
-                choices=[("payment", "Payment"), ("fine", "Fine")], max_length=50
+                choices=[("payment", "Payment"), ("fine", "Fine")],
+                max_length=50,
             ),
         ),
     ]
