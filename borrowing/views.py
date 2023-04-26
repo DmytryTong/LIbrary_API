@@ -103,7 +103,15 @@ class BorrowingCreateView(generics.CreateAPIView):
             payment_url = create_payment_session(request, borrowing.id)
 
             # Send a notification to the Telegram chat
-            message = f"A new borrowing has been created:\n\n{serializer.data}"
+            book_title = borrowing.book.title
+            user_email = borrowing.user.email
+            borrowing_id = borrowing.id
+            message = (
+                f"New borrowing created:\n"
+                f"Book: {book_title}\n"
+                f"User: {user_email}\n"
+                f"Borrowing ID: {borrowing_id}"
+            )
             send_telegram_notification(message)
 
             return Response(
