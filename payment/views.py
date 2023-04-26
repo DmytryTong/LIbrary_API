@@ -93,14 +93,6 @@ def create_payment_session(request, pk):
         payment.type = Payment.PaymentTypeEnum.FINE
     payment.save()
 
-    payment_info = (
-        f"{payment.type} for book {borrowing.book.title}\n"
-        f"User: {borrowing.user}\n"
-        f"Status: {payment.status}\n"
-        f"Amount: ${payment.money_to_pay / 100}"
-    )
-    helpers.send_telegram_notification(payment_info)
-
     return session.url
 
 
@@ -112,8 +104,17 @@ def cancel_payment(request) -> Response:
 @api_view(["GET"])
 def success_payment(request) -> Response:
     payment = get_object_or_404(Payment, session_id=request.GET.get('session_id'))
-    payment.status=Payment.PaymentStatusEnum.PAID
+    payment.status = Payment.PaymentStatusEnum.PAID
     payment.save()
+
+    payment_info = (
+        f"{payment.type} for book {payment.borrowing.book.title}\n"
+        f"User: {payment.borrowing.user}\n"
+        f"Status: {payment.status}\n"
+        f"Amount: ${payment.money_to_pay / 100}"
+    )
+    helpers.send_telegram_notification(payment_info)
+
     return Response({"message": (
         f"Thank you {payment.borrowing.user}, your payment is successful! "
         f"Your payment number is {payment.id} "
