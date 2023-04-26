@@ -79,8 +79,9 @@ def create_payment_session(request, pk):
             }
         ],
         mode="payment",
-        success_url=request.build_absolute_uri(reverse("payments:success-payment"))
-        + "?session_id={CHECKOUT_SESSION_ID}",
+        success_url=(
+                request.build_absolute_uri(reverse("payments:success-payment")) + "?session_id={CHECKOUT_SESSION_ID}"
+        ),
         cancel_url=request.build_absolute_uri(reverse("payments:cancel-payment")),
     )
 
@@ -102,11 +103,18 @@ def create_payment_session(request, pk):
 
 @api_view(["GET"])
 def cancel_payment(request) -> Response:
+    message = "Payment paused. You have 24 hours to complete the payment."
+    return Response({"message": message}, status=status.HTTP_200_OK)
+    """Endpoint that redirects from stripe payment session to cancel the payment"""
+
     return Response({"message": "Payment was paused"}, status=status.HTTP_200_OK)
 
 
 @api_view(["GET"])
 def success_payment(request) -> Response:
+    """Endpoint that signals that payment was successfull,
+    also sends notification to telegramm"""
+
     payment = get_object_or_404(Payment, session_id=request.GET.get("session_id"))
     payment.status = Payment.PaymentStatusEnum.PAID
     payment.save()

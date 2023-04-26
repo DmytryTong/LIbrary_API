@@ -6,4 +6,4 @@ def calculate_fee_payment(
 ) -> int:
     end_date += timedelta(hours=1)
     day_count = (end_date - start_date).days
-    return max(1, day_count) * daily_fee
+    return max(1, day_count) * daily_fee * 100
