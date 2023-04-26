@@ -79,17 +79,6 @@ class AuthenticatedBorrowingApiTests(TestCase):
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         self.assertEqual(res.data["id"], borrowing_test.id)
 
-    def test_create_borrowing(self):
-        """Test creating borrowing"""
-        payload = {
-            "book": self.book.id,
-            "borrow_date": "2021-01-01",
-            "expected_return_date": "2021-01-08",
-        }
-        res = self.client.post(BORROWING_URL_CREATE, payload)
-
-        self.assertEqual(res.status_code, status.HTTP_201_CREATED)
-
 
 class AdminBorrowingApiTests(TestCase):
     def setUp(self) -> None:

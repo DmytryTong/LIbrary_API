@@ -55,8 +55,7 @@ def create_payment_session(request, pk):
                 borrowing.expected_return_date,
                 borrowing.actual_return_date,
                 borrowing.book.daily_fee,
-            )
-            * settings.FINE_MULTIPLIER
+            ) * settings.FINE_MULTIPLIER
         )
     else:
         fee = calculate_fee_payment(
@@ -80,9 +79,12 @@ def create_payment_session(request, pk):
         ],
         mode="payment",
         success_url=(
-                request.build_absolute_uri(reverse("payments:success-payment")) + "?session_id={CHECKOUT_SESSION_ID}"
+            request.build_absolute_uri(reverse("payments:success-payment"))
+            + "?session_id={CHECKOUT_SESSION_ID}"
         ),
-        cancel_url=request.build_absolute_uri(reverse("payments:cancel-payment")),
+        cancel_url=request.build_absolute_uri(
+            reverse("payments:cancel-payment")
+        ),
     )
 
     payment = Payment.objects.create(
@@ -103,11 +105,10 @@ def create_payment_session(request, pk):
 
 @api_view(["GET"])
 def cancel_payment(request) -> Response:
+    """Endpoint that redirects from stripe
+    payment session to cancel the payment"""
     message = "Payment paused. You have 24 hours to complete the payment."
     return Response({"message": message}, status=status.HTTP_200_OK)
-    """Endpoint that redirects from stripe payment session to cancel the payment"""
-
-    return Response({"message": "Payment was paused"}, status=status.HTTP_200_OK)
 
 
 @api_view(["GET"])
@@ -115,7 +116,10 @@ def success_payment(request) -> Response:
     """Endpoint that signals that payment was successfull,
     also sends notification to telegramm"""
 
-    payment = get_object_or_404(Payment, session_id=request.GET.get("session_id"))
+    payment = get_object_or_404(
+        Payment,
+        session_id=request.GET.get("session_id")
+    )
     payment.status = Payment.PaymentStatusEnum.PAID
     payment.save()
 
@@ -130,7 +134,8 @@ def success_payment(request) -> Response:
     return Response(
         {
             "message": (
-                f"Thank you {payment.borrowing.user}, your payment is successful! "
+                f"Thank you {payment.borrowing.user}, "
+                f"your payment is successful! "
                 f"Your payment number is {payment.id} "
                 "Link: "
                 + request.build_absolute_uri(

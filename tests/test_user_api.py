@@ -8,7 +8,9 @@ from user.serializers import UserSerializer
 class UserApiTest(TestCase):
     def setUp(self):
         self.user = get_user_model().objects.create_user(
-            email="testuser@example.com", password="testpass", bio="adasdadadaadadsadaa"
+            email="testuser@example.com",
+            password="testpass",
+            bio="adasdadadaadadsadaa",
         )
 
     def test_create_user(self):
