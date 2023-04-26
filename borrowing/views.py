@@ -1,3 +1,5 @@
+from datetime import datetime
+
 import django_filters
 from django.db import transaction
 from django.shortcuts import get_object_or_404
@@ -84,6 +86,15 @@ class BorrowingCreateView(generics.CreateAPIView):
         if book.inventory <= 0:
             return Response(
                 {"error": "Book is not available"}, status=status.HTTP_400_BAD_REQUEST
+            )
+
+        borrow_date = str(timezone.now())
+        expected_return_date = request.data.get("expected_return_date")
+
+        if borrow_date > expected_return_date:
+            return Response(
+                {"error": "Expected return date must be after borrow date."},
+                status=status.HTTP_400_BAD_REQUEST,
             )
 
         with transaction.atomic():

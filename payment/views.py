@@ -76,7 +76,9 @@ def create_payment_session(request, pk):
             }
         ],
         mode="payment",
-        success_url=request.build_absolute_uri(reverse("payments:success-payment")) + "?session_id={CHECKOUT_SESSION_ID}",
+        success_url=(
+                request.build_absolute_uri(reverse("payments:success-payment")) + "?session_id={CHECKOUT_SESSION_ID}"
+        ),
         cancel_url=request.build_absolute_uri(reverse("payments:cancel-payment")),
     )
 
@@ -106,7 +108,8 @@ def create_payment_session(request, pk):
 
 @api_view(["GET"])
 def cancel_payment(request) -> Response:
-    return Response({"message": "Payment was paused"}, status=status.HTTP_200_OK)
+    message = "Payment paused. You have 24 hours to complete the payment."
+    return Response({"message": message}, status=status.HTTP_200_OK)
 
 
 @api_view(["GET"])
