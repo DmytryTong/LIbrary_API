@@ -1,23 +1,19 @@
 import django_filters
 from django.db import transaction
-from django.http import HttpResponseRedirect
 from django.shortcuts import get_object_or_404
-from django.urls import reverse
-
 from django.utils import timezone
-from django.utils.datetime_safe import datetime
 
 from rest_framework import generics, permissions, status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from book.models import Book
-from payment.helpers import calculate_fine_payment
 from .filters import BorrowingFilter
 from .models import Borrowing
 from .permissions import IsOwnerOrAdmin
 from .serializers import BorrowingSerializer, BorrowingCreateSerializer
 from .helpers import send_telegram_notification
+from payment.views import create_payment_session
 
 
 class BorrowingReturnView(generics.UpdateAPIView):
@@ -32,27 +28,22 @@ class BorrowingReturnView(generics.UpdateAPIView):
                 {"error": "This borrowing has already been returned."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
+
         borrowing.actual_return_date = timezone.now()
-        borrowing.is_active = False  # set is_active to False
+        borrowing.is_active = False
         borrowing.save()
-        fine = None
-        if borrowing.actual_return_date > borrowing.expected_return_date:
-            fine = calculate_fine_payment(
-                borrowing.expected_return_date,
-                borrowing.actual_return_date,
-                borrowing.book.daily_fee
-            )
         borrowing.book.inventory += 1
         borrowing.book.save()
+
+        if borrowing.actual_return_date > borrowing.expected_return_date:
+            payment_url = create_payment_session(request, borrowing.id)
+            return Response(
+                {"message": "your link to pay ---> " + payment_url},
+                status=status.HTTP_201_CREATED
+            )
+
         serializer = self.get_serializer(borrowing)
-
-        serializer = BorrowingSerializer(borrowing)
-
-        if fine:
-            payment_url = reverse("payments:success", args=[borrowing.id])
-            return HttpResponseRedirect(payment_url)
-
-        return Response(serializer.data)
+        return Response(serializer.data, status=status.HTTP_202_ACCEPTED)
 
 
 class BorrowingListView(generics.ListAPIView):
@@ -81,7 +72,7 @@ class BorrowingListView(generics.ListAPIView):
 class BorrowingDetailView(generics.RetrieveAPIView):
     serializer_class = BorrowingSerializer
     queryset = Borrowing.objects.all()
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [IsOwnerOrAdmin, ]
 
 
 class BorrowingCreateView(generics.CreateAPIView):
@@ -111,13 +102,16 @@ class BorrowingCreateView(generics.CreateAPIView):
             )
 
             serializer = BorrowingSerializer(borrowing)
-            payment_url = reverse("payments:success", args=[borrowing.id])
+            payment_url = create_payment_session(request, borrowing.id)
 
             # Send a notification to the Telegram chat
             message = f"A new borrowing has been created:\n\n{serializer.data}"
             send_telegram_notification(message)
 
-            return HttpResponseRedirect(payment_url)
+            return Response(
+                {"message": "your link to pay --->  " + payment_url},
+                status=status.HTTP_201_CREATED
+            )
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)

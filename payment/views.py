@@ -1,6 +1,7 @@
 import stripe
 from django.shortcuts import get_object_or_404
-from rest_framework import generics
+from django.urls import reverse
+from rest_framework import generics, status
 from rest_framework.decorators import api_view
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -8,7 +9,7 @@ from rest_framework.response import Response
 from borrowing import helpers
 from borrowing.models import Borrowing
 from config import settings
-from payment.helpers import calculate_fee_payment, calculate_fine_payment
+from payment.helpers import calculate_fee_payment
 from payment.models import Payment
 from payment.permissions import IsOwnerOrAdmin
 from payment.serializers import PaymentSerializer
@@ -44,20 +45,20 @@ class PaymentCreateView(generics.CreateAPIView):
     ]
 
 
-@api_view(["POST"])
 def create_payment_session(request, pk):
     stripe.api_key = settings.STRIPE_API_KEY
     borrowing = get_object_or_404(Borrowing, id=pk)
 
-    fee = calculate_fee_payment(
-        borrowing.expected_return_date,
-        borrowing.borrow_date,
-        borrowing.book.daily_fee
-    )
     if borrowing.actual_return_date:
-        fee = calculate_fine_payment(
+        fee = calculate_fee_payment(
             borrowing.expected_return_date,
             borrowing.actual_return_date,
+            borrowing.book.daily_fee
+        ) * settings.FINE_MULTIPLIER
+    else:
+        fee = calculate_fee_payment(
+            borrowing.borrow_date,
+            borrowing.expected_return_date,
             borrowing.book.daily_fee
         )
 
@@ -75,8 +76,8 @@ def create_payment_session(request, pk):
             }
         ],
         mode="payment",
-        success_url="http://localhost:4242/success",
-        cancel_url="http://127.0.0.1:8000/api/payments/cancel/",
+        success_url=request.build_absolute_uri(reverse("payments:success-payment")) + "?session_id={CHECKOUT_SESSION_ID}",
+        cancel_url=request.build_absolute_uri(reverse("payments:cancel-payment")),
     )
 
     payment = Payment.objects.create(
@@ -87,19 +88,34 @@ def create_payment_session(request, pk):
         session_url=session.url,
         money_to_pay=fee,
     )
+
+    if borrowing.actual_return_date:
+        payment.type = Payment.PaymentTypeEnum.FINE
     payment.save()
 
     payment_info = (
-        f"Payment for book {borrowing.book.title}\n"
+        f"{payment.type} for book {borrowing.book.title}\n"
         f"User: {borrowing.user}\n"
         f"Status: {payment.status}\n"
         f"Amount: ${payment.money_to_pay / 100}"
     )
     helpers.send_telegram_notification(payment_info)
 
-    return Response({"message": session.url}, status=200)
+    return session.url
 
 
 @api_view(["GET"])
-def cancel_payment(request):
-    return Response({"message": "Payment was paused"}, status=200)
+def cancel_payment(request) -> Response:
+    return Response({"message": "Payment was paused"}, status=status.HTTP_200_OK)
+
+
+@api_view(["GET"])
+def success_payment(request) -> Response:
+    payment = get_object_or_404(Payment, session_id=request.GET.get('session_id'))
+    payment.status=Payment.PaymentStatusEnum.PAID
+    payment.save()
+    return Response({"message": (
+        f"Thank you {payment.borrowing.user}, your payment is successful! "
+        f"Your payment number is {payment.id} "
+        "Link: " + request.build_absolute_uri(reverse("payments:payment-detail", args=[payment.id]))
+    )}, status=status.HTTP_200_OK)
