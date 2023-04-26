@@ -46,7 +46,6 @@ class PaymentCreateView(generics.CreateAPIView):
     ]
 
 
-@api_view(["POST"])
 def create_payment_session(request, pk):
     stripe.api_key = settings.STRIPE_API_KEY
     borrowing = get_object_or_404(Borrowing, id=pk)
@@ -103,7 +102,7 @@ def create_payment_session(request, pk):
     )
     helpers.send_telegram_notification(payment_info)
 
-    return Response({"message": session.url}, status=200)
+    return session.url
 
 
 @api_view(["GET"])

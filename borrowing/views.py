@@ -15,6 +15,7 @@ from .models import Borrowing
 from .permissions import IsOwnerOrAdmin
 from .serializers import BorrowingSerializer, BorrowingCreateSerializer
 from .helpers import send_telegram_notification
+from payment.views import create_payment_session
 
 
 class BorrowingReturnView(generics.UpdateAPIView):
@@ -36,9 +37,8 @@ class BorrowingReturnView(generics.UpdateAPIView):
         borrowing.book.save()
 
         if borrowing.actual_return_date > borrowing.expected_return_date:
-            payment_url = reverse("payments:session-payment", args=[borrowing.id])
-
-            return HttpResponseRedirect(payment_url)
+            payment_url = create_payment_session(request, borrowing.id)
+            return Response({"message": "your link to pay ---> " + payment_url}, status=status.HTTP_202_CREATED)
 
         serializer = self.get_serializer(borrowing)
         return Response(serializer.data, status=status.HTTP_202_ACCEPTED)
@@ -70,7 +70,7 @@ class BorrowingListView(generics.ListAPIView):
 class BorrowingDetailView(generics.RetrieveAPIView):
     serializer_class = BorrowingSerializer
     queryset = Borrowing.objects.all()
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [IsOwnerOrAdmin, ]
 
 
 class BorrowingCreateView(generics.CreateAPIView):
@@ -100,13 +100,13 @@ class BorrowingCreateView(generics.CreateAPIView):
             )
 
             serializer = BorrowingSerializer(borrowing)
-            payment_url = reverse("payments:session-payment", args=[borrowing.id])
+            payment_url = create_payment_session(request, borrowing.id)
 
             # Send a notification to the Telegram chat
             message = f"A new borrowing has been created:\n\n{serializer.data}"
             send_telegram_notification(message)
 
-            return HttpResponseRedirect(payment_url)
+            return Response({"message": "your link to pay --->  " + payment_url}, status=status.HTTP_201_CREATED)
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
