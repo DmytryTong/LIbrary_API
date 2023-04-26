@@ -1,8 +1,6 @@
 import django_filters
 from django.db import transaction
-from django.http import HttpResponseRedirect
 from django.shortcuts import get_object_or_404
-from django.urls import reverse
 from django.utils import timezone
 
 from rest_framework import generics, permissions, status
@@ -30,6 +28,7 @@ class BorrowingReturnView(generics.UpdateAPIView):
                 {"error": "This borrowing has already been returned."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
+
         borrowing.actual_return_date = timezone.now()
         borrowing.is_active = False
         borrowing.save()
@@ -38,7 +37,10 @@ class BorrowingReturnView(generics.UpdateAPIView):
 
         if borrowing.actual_return_date > borrowing.expected_return_date:
             payment_url = create_payment_session(request, borrowing.id)
-            return Response({"message": "your link to pay ---> " + payment_url}, status=status.HTTP_202_CREATED)
+            return Response(
+                {"message": "your link to pay ---> " + payment_url},
+                status=status.HTTP_201_CREATED
+            )
 
         serializer = self.get_serializer(borrowing)
         return Response(serializer.data, status=status.HTTP_202_ACCEPTED)
@@ -106,7 +108,10 @@ class BorrowingCreateView(generics.CreateAPIView):
             message = f"A new borrowing has been created:\n\n{serializer.data}"
             send_telegram_notification(message)
 
-            return Response({"message": "your link to pay --->  " + payment_url}, status=status.HTTP_201_CREATED)
+            return Response(
+                {"message": "your link to pay --->  " + payment_url},
+                status=status.HTTP_201_CREATED
+            )
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
