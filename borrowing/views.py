@@ -2,14 +2,17 @@ from datetime import datetime
 
 import django_filters
 from django.db import transaction
-from django.shortcuts import get_object_or_404
+from django.shortcuts import get_object_or_404, redirect
+from django.urls import reverse
 from django.utils import timezone
 
 from rest_framework import generics, permissions, status
+from rest_framework.exceptions import ValidationError
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from book.models import Book
+from payment.models import Payment
 from .filters import BorrowingFilter
 from .models import Borrowing
 from .permissions import IsBorrowingOwnerOrAdmin
@@ -80,12 +83,26 @@ class BorrowingCreateView(generics.CreateAPIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def create(self, request, *args, **kwargs):
+        user = request.user
+        # Check if user has any pending payments
+        if Payment.objects.filter(
+                borrowing__user=user,
+                status=Payment.PaymentStatusEnum.PENDING
+        ).exists():
+            borrowing_list_url = reverse("borrowing:borrowing-list")
+            return Response(
+                {
+                    "ERROR": f"Cannot create a borrowing until all pending payments are cleared. "
+                             f"Please pay all pending payments before creating a new borrowing. "
+                             f"You can view your borrowings at {borrowing_list_url}."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
         book_id = request.data.get("book")
         book = get_object_or_404(Book, id=book_id)
 
         if book.inventory <= 0:
             return Response(
-                {"error": "Book is not available"}, status=status.HTTP_400_BAD_REQUEST
+                {"ERROR": "Book is not available"}, status=status.HTTP_400_BAD_REQUEST
             )
 
         borrow_date = str(timezone.now())
@@ -114,7 +131,15 @@ class BorrowingCreateView(generics.CreateAPIView):
             payment_url = create_payment_session(request, borrowing.id)
 
             # Send a notification to the Telegram chat
-            message = f"A new borrowing has been created:\n\n{serializer.data}"
+            book_title = borrowing.book.title
+            user_email = borrowing.user.email
+            borrowing_id = borrowing.id
+            message = (
+                f"New borrowing created:\n"
+                f"Book: {book_title}\n"
+                f"User: {user_email}\n"
+                f"Borrowing ID: {borrowing_id}"
+            )
             send_telegram_notification(message)
 
             return Response(

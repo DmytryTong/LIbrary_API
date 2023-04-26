@@ -95,14 +95,6 @@ def create_payment_session(request, pk):
         payment.type = Payment.PaymentTypeEnum.FINE
     payment.save()
 
-    payment_info = (
-        f"{payment.type} for book {borrowing.book.title}\n"
-        f"User: {borrowing.user}\n"
-        f"Status: {payment.status}\n"
-        f"Amount: ${payment.money_to_pay / 100}"
-    )
-    helpers.send_telegram_notification(payment_info)
-
     return session.url
 
 
@@ -110,13 +102,28 @@ def create_payment_session(request, pk):
 def cancel_payment(request) -> Response:
     message = "Payment paused. You have 24 hours to complete the payment."
     return Response({"message": message}, status=status.HTTP_200_OK)
+    """Endpoint that redirects from stripe payment session to cancel the payment"""
+
+    return Response({"message": "Payment was paused"}, status=status.HTTP_200_OK)
 
 
 @api_view(["GET"])
 def success_payment(request) -> Response:
+    """Endpoint that signals that payment was successfull,
+    also sends notification to telegramm"""
+
     payment = get_object_or_404(Payment, session_id=request.GET.get("session_id"))
     payment.status=Payment.PaymentStatusEnum.PAID
     payment.save()
+
+    payment_info = (
+        f"{payment.type} for book {payment.borrowing.book.title}\n"
+        f"User: {payment.borrowing.user}\n"
+        f"Status: {payment.status}\n"
+        f"Amount: ${payment.money_to_pay / 100}"
+    )
+    helpers.send_telegram_notification(payment_info)
+
     return Response({"message": (
         f"Thank you {payment.borrowing.user}, your payment is successful! "
         f"Your payment number is {payment.id} "
