@@ -10,7 +10,7 @@ from rest_framework.response import Response
 from book.models import Book
 from .filters import BorrowingFilter
 from .models import Borrowing
-from .permissions import IsOwnerOrAdmin
+from .permissions import IsBorrowingOwnerOrAdmin
 from .serializers import BorrowingSerializer, BorrowingCreateSerializer
 from .helpers import send_telegram_notification
 from payment.views import create_payment_session
@@ -50,13 +50,13 @@ class BorrowingListView(generics.ListAPIView):
     serializer_class = BorrowingSerializer
     filter_backends = [django_filters.rest_framework.DjangoFilterBackend]
     filterset_class = BorrowingFilter
-    permission_classes = [permissions.IsAuthenticated, IsOwnerOrAdmin]
+    permission_classes = [IsAuthenticated, ]
 
     def get_queryset(self):
-        user = self.request.user
-        queryset = Borrowing.objects.filter(user=user)
+        queryset = Borrowing.objects.all()
+        if not self.request.user.is_staff:
+            return queryset.filter(user=self.request.user)
         is_active = self.request.query_params.get("is_active", None)
-        user_id = self.request.query_params.get("user_id", None)
         if is_active is not None:
             is_active = True if is_active.lower() == "true" else False
             queryset = (
@@ -64,15 +64,13 @@ class BorrowingListView(generics.ListAPIView):
                 if is_active
                 else queryset.exclude(actual_return_date=None)
             )
-        if user.is_superuser and user_id is not None:
-            queryset = Borrowing.objects.filter(user_id=user_id)
         return queryset
 
 
 class BorrowingDetailView(generics.RetrieveAPIView):
     serializer_class = BorrowingSerializer
     queryset = Borrowing.objects.all()
-    permission_classes = [IsOwnerOrAdmin, ]
+    permission_classes = [IsBorrowingOwnerOrAdmin, ]
 
 
 class BorrowingCreateView(generics.CreateAPIView):

@@ -111,7 +111,7 @@ def cancel_payment(request) -> Response:
 
 @api_view(["GET"])
 def success_payment(request) -> Response:
-    payment = get_object_or_404(Payment, session_id=request.GET.get('session_id'))
+    payment = get_object_or_404(Payment, session_id=request.GET.get("session_id"))
     payment.status=Payment.PaymentStatusEnum.PAID
     payment.save()
     return Response({"message": (
