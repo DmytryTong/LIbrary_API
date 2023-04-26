@@ -50,16 +50,19 @@ def create_payment_session(request, pk):
     borrowing = get_object_or_404(Borrowing, id=pk)
 
     if borrowing.actual_return_date:
-        fee = calculate_fee_payment(
-            borrowing.expected_return_date,
-            borrowing.actual_return_date,
-            borrowing.book.daily_fee
-        ) * settings.FINE_MULTIPLIER
+        fee = (
+            calculate_fee_payment(
+                borrowing.expected_return_date,
+                borrowing.actual_return_date,
+                borrowing.book.daily_fee,
+            )
+            * settings.FINE_MULTIPLIER
+        )
     else:
         fee = calculate_fee_payment(
             borrowing.borrow_date,
             borrowing.expected_return_date,
-            borrowing.book.daily_fee
+            borrowing.book.daily_fee,
         )
 
     session = stripe.checkout.Session.create(
@@ -76,7 +79,8 @@ def create_payment_session(request, pk):
             }
         ],
         mode="payment",
-        success_url=request.build_absolute_uri(reverse("payments:success-payment")) + "?session_id={CHECKOUT_SESSION_ID}",
+        success_url=request.build_absolute_uri(reverse("payments:success-payment"))
+        + "?session_id={CHECKOUT_SESSION_ID}",
         cancel_url=request.build_absolute_uri(reverse("payments:cancel-payment")),
     )
 
@@ -104,7 +108,7 @@ def cancel_payment(request) -> Response:
 @api_view(["GET"])
 def success_payment(request) -> Response:
     payment = get_object_or_404(Payment, session_id=request.GET.get("session_id"))
-    payment.status=Payment.PaymentStatusEnum.PAID
+    payment.status = Payment.PaymentStatusEnum.PAID
     payment.save()
 
     payment_info = (
@@ -115,8 +119,16 @@ def success_payment(request) -> Response:
     )
     helpers.send_telegram_notification(payment_info)
 
-    return Response({"message": (
-        f"Thank you {payment.borrowing.user}, your payment is successful! "
-        f"Your payment number is {payment.id} "
-        "Link: " + request.build_absolute_uri(reverse("payments:payment-detail", args=[payment.id]))
-    )}, status=status.HTTP_200_OK)
+    return Response(
+        {
+            "message": (
+                f"Thank you {payment.borrowing.user}, your payment is successful! "
+                f"Your payment number is {payment.id} "
+                "Link: "
+                + request.build_absolute_uri(
+                    reverse("payments:payment-detail", args=[payment.id])
+                )
+            )
+        },
+        status=status.HTTP_200_OK,
+    )

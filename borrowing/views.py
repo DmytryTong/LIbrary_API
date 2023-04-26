@@ -39,7 +39,7 @@ class BorrowingReturnView(generics.UpdateAPIView):
             payment_url = create_payment_session(request, borrowing.id)
             return Response(
                 {"message": "your link to pay ---> " + payment_url},
-                status=status.HTTP_201_CREATED
+                status=status.HTTP_201_CREATED,
             )
 
         serializer = self.get_serializer(borrowing)
@@ -50,7 +50,9 @@ class BorrowingListView(generics.ListAPIView):
     serializer_class = BorrowingSerializer
     filter_backends = [django_filters.rest_framework.DjangoFilterBackend]
     filterset_class = BorrowingFilter
-    permission_classes = [IsAuthenticated, ]
+    permission_classes = [
+        IsAuthenticated,
+    ]
 
     def get_queryset(self):
         queryset = Borrowing.objects.all()
@@ -70,7 +72,9 @@ class BorrowingListView(generics.ListAPIView):
 class BorrowingDetailView(generics.RetrieveAPIView):
     serializer_class = BorrowingSerializer
     queryset = Borrowing.objects.all()
-    permission_classes = [IsBorrowingOwnerOrAdmin, ]
+    permission_classes = [
+        IsBorrowingOwnerOrAdmin,
+    ]
 
 
 class BorrowingCreateView(generics.CreateAPIView):
@@ -116,7 +120,7 @@ class BorrowingCreateView(generics.CreateAPIView):
 
             return Response(
                 {"message": "your link to pay --->  " + payment_url},
-                status=status.HTTP_201_CREATED
+                status=status.HTTP_201_CREATED,
             )
 
     def perform_create(self, serializer):

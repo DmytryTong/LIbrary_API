@@ -8,9 +8,7 @@ from user.serializers import UserSerializer
 class UserApiTest(TestCase):
     def setUp(self):
         self.user = get_user_model().objects.create_user(
-            email="testuser@example.com",
-            password="testpass",
-            bio="adasdadadaadadsadaa"
+            email="testuser@example.com", password="testpass", bio="adasdadadaadadsadaa"
         )
 
     def test_create_user(self):
@@ -20,8 +18,7 @@ class UserApiTest(TestCase):
 
     def test_create_superuser(self):
         admin_user = get_user_model().objects.create_superuser(
-            email="admin@example.com",
-            password="testpass"
+            email="admin@example.com", password="testpass"
         )
         self.assertEqual(get_user_model().objects.count(), 2)
         self.assertEqual(admin_user.email, "admin@example.com")
