@@ -98,11 +98,16 @@ def create_payment_session(request, pk):
 
 @api_view(["GET"])
 def cancel_payment(request) -> Response:
+    """Endpoint that redirects from stripe payment session to cancel the payment"""
+
     return Response({"message": "Payment was paused"}, status=status.HTTP_200_OK)
 
 
 @api_view(["GET"])
 def success_payment(request) -> Response:
+    """Endpoint that signals that payment was successfull,
+    also sends notification to telegramm"""
+
     payment = get_object_or_404(Payment, session_id=request.GET.get("session_id"))
     payment.status=Payment.PaymentStatusEnum.PAID
     payment.save()
